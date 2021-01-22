@@ -4,18 +4,23 @@ package container
 
 import (
 	"reflect"
+	"sync"
 )
 
 // binding keeps a binding resolver and instance (for singleton bindings).
 type binding struct {
 	resolver  interface{} // resolver function
-	instance  interface{} // instance stored for singleton bindings
 	singleton bool
+
+	mu       sync.Mutex
+	instance interface{} // instance stored for singleton bindings
 }
 
 // Container is a map of reflect.Type to binding
 type Container struct {
-	parent   *Container
+	parent *Container
+
+	mu       sync.RWMutex
 	bindings map[reflect.Type]map[string]*binding
 }
 
@@ -30,6 +35,9 @@ func (c Container) bind(name string, resolver interface{}, singleton bool) {
 	if resolverTypeOf.Kind() != reflect.Func {
 		panic("the resolver must be a function")
 	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	for i := 0; i < resolverTypeOf.NumOut(); i++ {
 		abstraction := resolverTypeOf.Out(i)
@@ -68,8 +76,23 @@ func (c Container) arguments(name string, function interface{}) []reflect.Value 
 }
 
 func (c Container) resolve(name string, abstraction reflect.Type) interface{} {
+	if instance := c.resolveLocally(name, abstraction); instance != nil {
+		return instance
+	}
+	if c.parent != nil {
+		return c.parent.resolve(name, abstraction)
+	}
+	panic("no concrete found for the abstraction: " + abstraction.String())
+}
+
+func (c Container) resolveLocally(name string, abstraction reflect.Type) interface{} {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if binding, ok := c.bindings[abstraction][name]; ok {
 		if binding.singleton {
+			binding.mu.Lock()
+			defer binding.mu.Unlock()
+
 			if binding.instance == nil {
 				binding.instance = c.invoke(binding.resolver)
 			}
@@ -77,10 +100,7 @@ func (c Container) resolve(name string, abstraction reflect.Type) interface{} {
 		}
 		return c.invoke(binding.resolver)
 	}
-	if c.parent != nil {
-		return c.parent.resolve(name, abstraction)
-	}
-	panic("no concrete found for the abstraction: " + abstraction.String())
+	return nil
 }
 
 // Singleton will bind an abstraction to a concrete for further singleton resolves.
@@ -113,6 +133,9 @@ func (c Container) TransientNamed(name string, resolver interface{}) {
 
 // Reset will reset the container and remove all the bindings.
 func (c Container) Reset() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	for k := range c.bindings {
 		delete(c.bindings, k)
 	}
@@ -166,6 +189,9 @@ func (c Container) ForEachNamed(function interface{}) {
 		panic("function must not return anything")
 	}
 	abstraction := functionTypeOf.In(0)
+
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	for name := range c.bindings[abstraction] {
 		if name == "" {
 			continue
