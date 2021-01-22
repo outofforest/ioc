@@ -8,28 +8,31 @@ import (
 
 // binding keeps a binding resolver and instance (for singleton bindings).
 type binding struct {
-	resolver interface{} // resolver function
-	instance interface{} // instance stored for singleton bindings
+	resolver  interface{} // resolver function
+	instance  interface{} // instance stored for singleton bindings
+	singleton bool
 }
 
 // resolve will return the concrete of related abstraction.
 func (b binding) resolve(c Container) interface{} {
-	if b.instance != nil {
+	if b.singleton {
+		if b.instance == nil {
+			b.instance = c.invoke(b.resolver)
+		}
 		return b.instance
 	}
-
 	return c.invoke(b.resolver)
 }
 
 // Container is a map of reflect.Type to binding
 type Container struct {
 	parent   *Container
-	bindings map[reflect.Type]map[string]binding
+	bindings map[reflect.Type]map[string]*binding
 }
 
 // NewContainer returns a new instance of Container
 func NewContainer() Container {
-	return Container{bindings: map[reflect.Type]map[string]binding{}}
+	return Container{bindings: map[reflect.Type]map[string]*binding{}}
 }
 
 // bind will map an abstraction to a concrete and set instance if it's a singleton binding.
@@ -47,11 +50,12 @@ func (c Container) bind(name string, resolver interface{}, singleton bool) {
 
 		abstraction := resolverTypeOf.Out(i)
 		if _, exists := c.bindings[abstraction]; !exists {
-			c.bindings[abstraction] = map[string]binding{}
+			c.bindings[abstraction] = map[string]*binding{}
 		}
-		c.bindings[abstraction][name] = binding{
-			resolver: resolver,
-			instance: instance,
+		c.bindings[abstraction][name] = &binding{
+			resolver:  resolver,
+			instance:  instance,
+			singleton: singleton,
 		}
 	}
 }
@@ -76,7 +80,7 @@ func (c Container) arguments(name string, function interface{}) []reflect.Value 
 	return arguments
 }
 
-func (c Container) resolve(name string, abstraction reflect.Type) binding {
+func (c Container) resolve(name string, abstraction reflect.Type) *binding {
 	if concrete, ok := c.bindings[abstraction][name]; ok {
 		return concrete
 	}
