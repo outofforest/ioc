@@ -6,7 +6,7 @@ import (
 	internal "github.com/golobby/container/pkg/container"
 )
 
-func NewContainer() internal.Container {
+func NewContainer() *internal.Container {
 	return internal.NewContainer()
 }
 

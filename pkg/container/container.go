@@ -25,12 +25,14 @@ type Container struct {
 }
 
 // NewContainer returns a new instance of Container
-func NewContainer() Container {
-	return Container{bindings: map[reflect.Type]map[string]*binding{}}
+func NewContainer() *Container {
+	c := &Container{bindings: map[reflect.Type]map[string]*binding{}}
+	c.Singleton(&c)
+	return c
 }
 
 // bind will map an abstraction to a concrete and set instance if it's a singleton binding.
-func (c Container) bind(name string, resolver interface{}, singleton bool) {
+func (c *Container) bind(name string, resolver interface{}, singleton bool) {
 	resolverTypeOf := reflect.TypeOf(resolver)
 	if resolverTypeOf.Kind() != reflect.Func {
 		panic("the resolver must be a function")
@@ -57,12 +59,12 @@ func (c Container) bind(name string, resolver interface{}, singleton bool) {
 
 // invoke will call the given function and return its returned value.
 // It only works for functions that return a single value.
-func (c Container) invoke(function interface{}) interface{} {
+func (c *Container) invoke(function interface{}) interface{} {
 	return reflect.ValueOf(function).Call(c.arguments("", function))[0].Interface()
 }
 
 // arguments will return resolved arguments of the given function.
-func (c Container) arguments(name string, function interface{}) []reflect.Value {
+func (c *Container) arguments(name string, function interface{}) []reflect.Value {
 	functionTypeOf := reflect.TypeOf(function)
 	argumentsCount := functionTypeOf.NumIn()
 	arguments := make([]reflect.Value, argumentsCount)
@@ -75,7 +77,7 @@ func (c Container) arguments(name string, function interface{}) []reflect.Value 
 	return arguments
 }
 
-func (c Container) resolve(name string, abstraction reflect.Type) interface{} {
+func (c *Container) resolve(name string, abstraction reflect.Type) interface{} {
 	if instance := c.resolveLocally(name, abstraction); instance != nil {
 		return instance
 	}
@@ -85,7 +87,7 @@ func (c Container) resolve(name string, abstraction reflect.Type) interface{} {
 	panic("no concrete found for the abstraction: " + abstraction.String())
 }
 
-func (c Container) resolveLocally(name string, abstraction reflect.Type) interface{} {
+func (c *Container) resolveLocally(name string, abstraction reflect.Type) interface{} {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if binding, ok := c.bindings[abstraction][name]; ok {
@@ -106,33 +108,33 @@ func (c Container) resolveLocally(name string, abstraction reflect.Type) interfa
 // Singleton will bind an abstraction to a concrete for further singleton resolves.
 // It takes a resolver function which returns the concrete and its return type matches the abstraction (interface).
 // The resolver function can have arguments of abstraction that have bound already in Container.
-func (c Container) Singleton(resolver interface{}) {
+func (c *Container) Singleton(resolver interface{}) {
 	c.SingletonNamed("", resolver)
 }
 
 // SingletonNamed will bind a named abstraction to a concrete for further singleton resolves.
 // It takes a resolver function which returns the concrete and its return type matches the abstraction (interface).
 // The resolver function can have arguments of abstraction that have bound already in Container.
-func (c Container) SingletonNamed(name string, resolver interface{}) {
+func (c *Container) SingletonNamed(name string, resolver interface{}) {
 	c.bind(name, resolver, true)
 }
 
 // Transient will bind an abstraction to a concrete for further transient resolves.
 // It takes a resolver function which returns the concrete and its return type matches the abstraction (interface).
 // The resolver function can have arguments of abstraction that have bound already in Container.
-func (c Container) Transient(resolver interface{}) {
+func (c *Container) Transient(resolver interface{}) {
 	c.TransientNamed("", resolver)
 }
 
 // TransientNamed will bind a named abstraction to a concrete for further transient resolves.
 // It takes a resolver function which returns the concrete and its return type matches the abstraction (interface).
 // The resolver function can have arguments of abstraction that have bound already in Container.
-func (c Container) TransientNamed(name string, resolver interface{}) {
+func (c *Container) TransientNamed(name string, resolver interface{}) {
 	c.bind(name, resolver, false)
 }
 
 // Reset will reset the container and remove all the bindings.
-func (c Container) Reset() {
+func (c *Container) Reset() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -145,7 +147,7 @@ func (c Container) Reset() {
 // It can take an abstraction (interface reference) and fill it with the related implementation.
 // It also can takes a function (receiver) with one or more arguments of the abstractions (interfaces) that need to be
 // resolved, Container will invoke the receiver function and pass the related implementations.
-func (c Container) Make(receiver interface{}) {
+func (c *Container) Make(receiver interface{}) {
 	c.MakeNamed("", receiver)
 }
 
@@ -153,7 +155,7 @@ func (c Container) Make(receiver interface{}) {
 // It can take an abstraction (interface reference) and fill it with the related implementation.
 // It also can takes a function (receiver) with one or more arguments of the abstractions (interfaces) that need to be
 // resolved, Container will invoke the receiver function and pass the related implementations.
-func (c Container) MakeNamed(name string, receiver interface{}) {
+func (c *Container) MakeNamed(name string, receiver interface{}) {
 	receiverTypeOf := reflect.TypeOf(receiver)
 	if receiverTypeOf == nil {
 		panic("cannot detect type of the receiver, make sure your are passing reference of the object")
@@ -177,7 +179,7 @@ func (c Container) MakeNamed(name string, receiver interface{}) {
 }
 
 // ForEachNamed iterates over all named concretes
-func (c Container) ForEachNamed(function interface{}) {
+func (c *Container) ForEachNamed(function interface{}) {
 	functionTypeOf := reflect.TypeOf(function)
 	if functionTypeOf.Kind() != reflect.Func {
 		panic("argument must be a function")
@@ -203,8 +205,8 @@ func (c Container) ForEachNamed(function interface{}) {
 
 // SubContainer creates sub container
 // Bindings are resolved in sub container first and if it's not possible request is redirected to the parent one
-func (c Container) SubContainer() Container {
+func (c *Container) SubContainer() *Container {
 	sub := NewContainer()
-	sub.parent = &c
+	sub.parent = c
 	return sub
 }
