@@ -312,7 +312,7 @@ func TestMakeWithNonReference(t *testing.T) {
 
 func TestMakeWithUnboundedAbstraction(t *testing.T) {
 	instance := container.NewContainer()
-	value := "no concrete found for the abstraction container_test.Shape"
+	value := "no concrete found for the abstraction: container_test.Shape"
 	assert.PanicsWithValue(t, value, func() {
 		var s Shape
 		instance.Reset()
@@ -355,4 +355,34 @@ func TestForEachNamedReturnsNamedConcretesOnly(t *testing.T) {
 	assert.Len(t, vals, 2)
 	assert.True(t, vals["B"])
 	assert.True(t, vals["C"])
+}
+
+func TestEachContainerResolvesFromItself(t *testing.T) {
+	instance := container.NewContainer()
+	instance.Singleton(func() Shape {
+		return &Circle{a: 5}
+	})
+	subInstance := instance.SubContainer()
+	subInstance.Singleton(func() Shape {
+		return &Circle{a: 6}
+	})
+
+	var shape Shape
+	instance.Make(&shape)
+	assert.Equal(t, 5, shape.GetArea())
+
+	subInstance.Make(&shape)
+	assert.Equal(t, 6, shape.GetArea())
+}
+
+func TestSubContainerResolvesFromParent(t *testing.T) {
+	instance := container.NewContainer()
+	instance.Singleton(func() Shape {
+		return &Circle{a: 5}
+	})
+	subInstance := instance.SubContainer()
+
+	var shape Shape
+	subInstance.Make(&shape)
+	assert.Equal(t, 5, shape.GetArea())
 }

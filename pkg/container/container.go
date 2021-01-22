@@ -22,11 +22,14 @@ func (b binding) resolve(c Container) interface{} {
 }
 
 // Container is a map of reflect.Type to binding
-type Container map[reflect.Type]map[string]binding
+type Container struct {
+	parent   *Container
+	bindings map[reflect.Type]map[string]binding
+}
 
 // NewContainer returns a new instance of Container
 func NewContainer() Container {
-	return make(Container)
+	return Container{bindings: map[reflect.Type]map[string]binding{}}
 }
 
 // bind will map an abstraction to a concrete and set instance if it's a singleton binding.
@@ -43,10 +46,10 @@ func (c Container) bind(name string, resolver interface{}, singleton bool) {
 		}
 
 		abstraction := resolverTypeOf.Out(i)
-		if _, exists := c[abstraction]; !exists {
-			c[abstraction] = map[string]binding{}
+		if _, exists := c.bindings[abstraction]; !exists {
+			c.bindings[abstraction] = map[string]binding{}
 		}
-		c[abstraction][name] = binding{
+		c.bindings[abstraction][name] = binding{
 			resolver: resolver,
 			instance: instance,
 		}
@@ -67,18 +70,20 @@ func (c Container) arguments(name string, function interface{}) []reflect.Value 
 
 	for i := 0; i < argumentsCount; i++ {
 		abstraction := functionTypeOf.In(i)
-		var instance interface{}
-
-		if concrete, ok := c[abstraction][name]; ok {
-			instance = concrete.resolve(c)
-		} else {
-			panic("no concrete found for the abstraction: " + abstraction.String())
-		}
-
-		arguments[i] = reflect.ValueOf(instance)
+		arguments[i] = reflect.ValueOf(c.resolve(name, abstraction).resolve(c))
 	}
 
 	return arguments
+}
+
+func (c Container) resolve(name string, abstraction reflect.Type) binding {
+	if concrete, ok := c.bindings[abstraction][name]; ok {
+		return concrete
+	}
+	if c.parent != nil {
+		return c.parent.resolve(name, abstraction)
+	}
+	panic("no concrete found for the abstraction: " + abstraction.String())
 }
 
 // Singleton will bind an abstraction to a concrete for further singleton resolves.
@@ -111,8 +116,8 @@ func (c Container) TransientNamed(name string, resolver interface{}) {
 
 // Reset will reset the container and remove all the bindings.
 func (c Container) Reset() {
-	for k := range c {
-		delete(c, k)
+	for k := range c.bindings {
+		delete(c.bindings, k)
 	}
 }
 
@@ -137,13 +142,9 @@ func (c Container) MakeNamed(name string, receiver interface{}) {
 	if receiverTypeOf.Kind() == reflect.Ptr {
 		abstraction := receiverTypeOf.Elem()
 
-		if concrete, ok := c[abstraction][name]; ok {
-			instance := concrete.resolve(c)
-			reflect.ValueOf(receiver).Elem().Set(reflect.ValueOf(instance))
-			return
-		}
-
-		panic("no concrete found for the abstraction " + abstraction.String())
+		instance := c.resolve(name, abstraction).resolve(c)
+		reflect.ValueOf(receiver).Elem().Set(reflect.ValueOf(instance))
+		return
 	}
 
 	if receiverTypeOf.Kind() == reflect.Func {
@@ -168,11 +169,19 @@ func (c Container) ForEachNamed(function interface{}) {
 		panic("function must not return anything")
 	}
 	abstraction := functionTypeOf.In(0)
-	for name := range c[abstraction] {
+	for name := range c.bindings[abstraction] {
 		if name == "" {
 			continue
 		}
 		arguments := c.arguments(name, function)
 		reflect.ValueOf(function).Call(arguments)
 	}
+}
+
+// SubContainer creates sub container
+// Bindings are resolved in sub container first and if it's not possible request is redirected to the parent one
+func (c Container) SubContainer() Container {
+	sub := NewContainer()
+	sub.parent = &c
+	return sub
 }
