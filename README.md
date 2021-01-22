@@ -33,7 +33,8 @@ After the binding process, you can ask the IoC container to get the appropriate 
 Singleton binding using Container:
 
 ```go
-container.Singleton(func() Abstraction {
+c := container.NewContainer()
+c.Singleton(func() Abstraction {
   return Implementation
 })
 ```
@@ -43,7 +44,8 @@ It takes a resolver function which its return type is the abstraction and the fu
 Example for a singleton binding:
 
 ```go
-container.Singleton(func() Database {
+c := container.NewContainer()
+c.Singleton(func() Database {
   return &MySQL{}
 })
 ```
@@ -55,7 +57,8 @@ Transient binding is also similar to singleton binding.
 Example for a transient binding:
 
 ```go
-container.Transient(func() Shape {
+c := container.NewContainer()
+c.Transient(func() Shape {
   return &Rectangle{}
 })
 ```
@@ -69,16 +72,18 @@ Container resolves the dependencies with the method `make()`.
 One way to get the appropriate implementation you need is to declare an instance of the abstraction type and pass its reference to Container this way:
 
 ```go
+c := container.NewContainer()
 var a Abstraction
-container.Make(&a)
+c.Make(&a)
 // "a" will be implementation of the Abstraction
 ```
 
 Example:
 
 ```go
+c := container.NewContainer()
 var m Mailer
-container.Make(&m)
+c.Make(&m)
 m.Send("info@miladrahimi.com", "Hello Milad!")
 ```
 
@@ -88,7 +93,8 @@ Another way to resolve the dependencies is by using a function (receiver) that i
 need. Container will invoke the function and pass the related implementations for each abstraction.
 
 ```go
-container.Make(func(a Abstraction) {
+c := container.NewContainer()
+c.Make(func(a Abstraction) {
   // "a" will be implementation of the Abstraction
 })
 ```
@@ -105,7 +111,8 @@ container.Make(func(db Database) {
 You can also resolve multiple abstractions this way:
 
 ```go
-container.Make(func(db Database, s Shape) {
+c := container.NewContainer()
+c.Make(func(db Database, s Shape) {
   db.Query("...")
   s.Area()
 })
@@ -116,10 +123,11 @@ container.Make(func(db Database, s Shape) {
 You can also use named bindings to create many bindings of the same type:
 
 ```go
-container.SingletonNamed("concreteFactoryA", func() Factory {
+c := container.NewContainer()
+c.SingletonNamed("concreteFactoryA", func() Factory {
 	return &ConcreteFactoryA{}
 })
-container.SingletonNamed("concreteFactoryB", func() Factory {
+c.SingletonNamed("concreteFactoryB", func() Factory {
     return &ConcreteFactoryB{}
 })
 ```
@@ -127,14 +135,15 @@ container.SingletonNamed("concreteFactoryB", func() Factory {
 Then you may easily retrieve concrete factory based on a string saved ex. in DB:
 
 ```go
+c := container.NewContainer()
 var factory Factory
-container.MakeNamed(factoryName, &factory)
+c.MakeNamed(factoryName, &factory)
 ```
 
 You can also easily iterate over all named bindings of particular interface:
 
 ```go
-container.ForEachNamed(func(factory Factory)) {
+c.ForEachNamed(func(factory Factory)) {
     
 }
 ```
@@ -144,13 +153,15 @@ container.ForEachNamed(func(factory Factory)) {
 You can also resolve a dependency at the binding time in your resolver function like the following example.
 
 ```go
+c := container.NewContainer()
+
 // Bind Config to JsonConfig
-container.Singleton(func() Config {
+c.Singleton(func() Config {
     return &JsonConfig{...}
 })
 
 // Bind Database to MySQL
-container.Singleton(func(c Config) Database {
+c.Singleton(func(c Config) Database {
     // "c" will be the instance of JsonConfig
     return &MySQL{
         Username: c.Get("DB_USERNAME"),
@@ -160,18 +171,6 @@ container.Singleton(func(c Config) Database {
 ```
 
 Notice: You can only resolve the dependencies in a binding resolver function that has already bound.
-
-### Standalone instance
-
-Container works without any initialization keeping your bindings in the default instance. Sometimes you may want to create a standalone instance for a part of application. If so, create a new instance:
-
-```go
-c := container.NewContainer() // returns container.Container
-c.Singleton(binding)
-c.Make(&resolver)
-```
-
-The rest stays the same. The default container is still available.
 
 #### Sub containers
 
