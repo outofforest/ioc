@@ -27,7 +27,9 @@ type Container struct {
 // NewContainer returns a new instance of Container
 func NewContainer() *Container {
 	c := &Container{bindings: map[reflect.Type]map[string]*binding{}}
-	c.Singleton(&c)
+	c.Singleton(func() *Container {
+		return c
+	})
 	return c
 }
 
