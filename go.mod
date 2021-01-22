@@ -1,4 +1,4 @@
-module github.com/golobby/container
+module github.com/wojciech-malota-wojcik/container
 
 go 1.11
 
