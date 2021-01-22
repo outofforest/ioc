@@ -13,17 +13,6 @@ type binding struct {
 	singleton bool
 }
 
-// resolve will return the concrete of related abstraction.
-func (b binding) resolve(c Container) interface{} {
-	if b.singleton {
-		if b.instance == nil {
-			b.instance = c.invoke(b.resolver)
-		}
-		return b.instance
-	}
-	return c.invoke(b.resolver)
-}
-
 // Container is a map of reflect.Type to binding
 type Container struct {
 	parent   *Container
@@ -74,15 +63,21 @@ func (c Container) arguments(name string, function interface{}) []reflect.Value 
 
 	for i := 0; i < argumentsCount; i++ {
 		abstraction := functionTypeOf.In(i)
-		arguments[i] = reflect.ValueOf(c.resolve(name, abstraction).resolve(c))
+		arguments[i] = reflect.ValueOf(c.resolve(name, abstraction))
 	}
 
 	return arguments
 }
 
-func (c Container) resolve(name string, abstraction reflect.Type) *binding {
-	if concrete, ok := c.bindings[abstraction][name]; ok {
-		return concrete
+func (c Container) resolve(name string, abstraction reflect.Type) interface{} {
+	if binding, ok := c.bindings[abstraction][name]; ok {
+		if binding.singleton {
+			if binding.instance == nil {
+				binding.instance = c.invoke(binding.resolver)
+			}
+			return binding.instance
+		}
+		return c.invoke(binding.resolver)
 	}
 	if c.parent != nil {
 		return c.parent.resolve(name, abstraction)
@@ -146,7 +141,7 @@ func (c Container) MakeNamed(name string, receiver interface{}) {
 	if receiverTypeOf.Kind() == reflect.Ptr {
 		abstraction := receiverTypeOf.Elem()
 
-		instance := c.resolve(name, abstraction).resolve(c)
+		instance := c.resolve(name, abstraction)
 		reflect.ValueOf(receiver).Elem().Set(reflect.ValueOf(instance))
 		return
 	}
