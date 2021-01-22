@@ -33,6 +33,9 @@ func (c Container) bind(name string, resolver interface{}, singleton bool) {
 
 	for i := 0; i < resolverTypeOf.NumOut(); i++ {
 		abstraction := resolverTypeOf.Out(i)
+		if _, exists := c.bindings[abstraction][name]; exists {
+			panic("concrete already exists  for the abstraction: " + abstraction.String())
+		}
 		if _, exists := c.bindings[abstraction]; !exists {
 			c.bindings[abstraction] = map[string]*binding{}
 		}
