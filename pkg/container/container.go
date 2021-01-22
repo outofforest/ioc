@@ -32,18 +32,13 @@ func (c Container) bind(name string, resolver interface{}, singleton bool) {
 	}
 
 	for i := 0; i < resolverTypeOf.NumOut(); i++ {
-		var instance interface{}
-		if singleton {
-			instance = c.invoke(resolver)
-		}
-
 		abstraction := resolverTypeOf.Out(i)
 		if _, exists := c.bindings[abstraction]; !exists {
 			c.bindings[abstraction] = map[string]*binding{}
 		}
 		c.bindings[abstraction][name] = &binding{
 			resolver:  resolver,
-			instance:  instance,
+			instance:  nil,
 			singleton: singleton,
 		}
 	}
