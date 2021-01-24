@@ -386,3 +386,14 @@ func TestSubContainerResolvesFromParent(t *testing.T) {
 	subInstance.Make(&shape)
 	assert.Equal(t, 5, shape.GetArea())
 }
+
+func TestMakeSucceedsIfNilErrorIsProduced(t *testing.T) {
+	instance := New()
+	instance.Transient(func() error {
+		return nil
+	})
+
+	var err error
+	instance.Make(&err)
+	assert.Nil(t, err)
+}

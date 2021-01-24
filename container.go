@@ -7,6 +7,8 @@ import (
 	"sync"
 )
 
+var errType = reflect.TypeOf((*error)(nil)).Elem()
+
 // binding keeps a binding resolver and instance (for singleton bindings).
 type binding struct {
 	resolver  interface{} // resolver function
@@ -80,16 +82,18 @@ func (c *Container) arguments(name string, function interface{}) []reflect.Value
 }
 
 func (c *Container) resolve(name string, abstraction reflect.Type) interface{} {
-	if instance := c.resolveLocally(name, abstraction); instance != nil {
-		return instance
-	}
-	if c.parent != nil {
+	instance, found := c.resolveLocally(name, abstraction)
+	if found {
+		if instance != nil || abstraction.Implements(errType) {
+			return instance
+		}
+	} else if c.parent != nil {
 		return c.parent.resolve(name, abstraction)
 	}
 	panic("no concrete found for the abstraction: " + abstraction.String())
 }
 
-func (c *Container) resolveLocally(name string, abstraction reflect.Type) interface{} {
+func (c *Container) resolveLocally(name string, abstraction reflect.Type) (interface{}, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	if binding, ok := c.bindings[abstraction.String()][name]; ok {
@@ -100,11 +104,11 @@ func (c *Container) resolveLocally(name string, abstraction reflect.Type) interf
 			if binding.instance == nil {
 				binding.instance = c.invoke(binding.resolver)
 			}
-			return binding.instance
+			return binding.instance, true
 		}
-		return c.invoke(binding.resolver)
+		return c.invoke(binding.resolver), true
 	}
-	return nil
+	return nil, false
 }
 
 // Singleton will bind an abstraction to a concrete for further singleton resolves.
@@ -166,8 +170,9 @@ func (c *Container) MakeNamed(name string, receiver interface{}) {
 	if receiverTypeOf.Kind() == reflect.Ptr {
 		abstraction := receiverTypeOf.Elem()
 
-		instance := c.resolve(name, abstraction)
-		reflect.ValueOf(receiver).Elem().Set(reflect.ValueOf(instance))
+		if instance := c.resolve(name, abstraction); instance != nil {
+			reflect.ValueOf(receiver).Elem().Set(reflect.ValueOf(instance))
+		}
 		return
 	}
 
