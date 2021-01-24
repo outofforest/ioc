@@ -312,7 +312,7 @@ func TestMakeWithNonReference(t *testing.T) {
 
 func TestMakeWithUnboundedAbstraction(t *testing.T) {
 	instance := New()
-	value := "no concrete found for the abstraction: container_test.Shape"
+	value := "no concrete found for the abstraction: ioc.Shape"
 	assert.PanicsWithValue(t, value, func() {
 		var s Shape
 		instance.Reset()
@@ -322,7 +322,7 @@ func TestMakeWithUnboundedAbstraction(t *testing.T) {
 
 func TestMakeWithCallbackThatHasAUnboundedAbstraction(t *testing.T) {
 	instance := New()
-	value := "no concrete found for the abstraction: container_test.Database"
+	value := "no concrete found for the abstraction: ioc.Database"
 	assert.PanicsWithValue(t, value, func() {
 		instance.Reset()
 		instance.Singleton(func() Shape {
