@@ -59,12 +59,6 @@ func (c *Container) bind(name string, resolver interface{}, singleton bool) {
 	}
 }
 
-// invoke will call the given function and return its returned value.
-// It only works for functions that return a single value.
-func (c *Container) invoke(function interface{}) interface{} {
-	return reflect.ValueOf(function).Call(c.arguments("", function))[0].Interface()
-}
-
 // arguments will return resolved arguments of the given function.
 func (c *Container) arguments(name string, function interface{}) []reflect.Value {
 	functionTypeOf := reflect.TypeOf(function)
@@ -100,11 +94,13 @@ func (c *Container) resolveLocally(name string, abstraction reflect.Type) (inter
 			defer binding.mu.Unlock()
 
 			if binding.instance == nil {
-				binding.instance = c.invoke(binding.resolver)
+				c.Call(binding.resolver, &binding.instance)
 			}
 			return binding.instance, true
 		}
-		return c.invoke(binding.resolver), true
+		var instance interface{}
+		c.Call(binding.resolver, &instance)
+		return instance, true
 	}
 	return nil, false
 }
@@ -167,10 +163,7 @@ func (c *Container) ResolveNamed(name string, receiver interface{}) {
 
 	if receiverTypeOf.Kind() == reflect.Ptr {
 		abstraction := receiverTypeOf.Elem()
-
-		if instance := c.resolve(name, abstraction); instance != nil {
-			reflect.ValueOf(receiver).Elem().Set(reflect.ValueOf(instance))
-		}
+		reflect.ValueOf(receiver).Elem().Set(reflect.ValueOf(c.resolve(name, abstraction)))
 		return
 	}
 
@@ -205,6 +198,14 @@ func (c *Container) ForEachNamed(function interface{}) {
 		}
 		arguments := c.arguments(name, function)
 		reflect.ValueOf(function).Call(arguments)
+	}
+}
+
+// Call will call the given function and return its returned values.
+func (c *Container) Call(function interface{}, returnedValues ...interface{}) {
+	res := reflect.ValueOf(function).Call(c.arguments("", function))
+	for i, ret := range res {
+		reflect.ValueOf(returnedValues[i]).Elem().Set(ret)
 	}
 }
 

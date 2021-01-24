@@ -1,6 +1,7 @@
 package ioc
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -404,4 +405,42 @@ func TestResolvePanicsIfDependencyResolvesToNil(t *testing.T) {
 		subInstance.Resolve(&shape)
 		fmt.Println(shape)
 	}, "Expected panic")
+}
+
+func TestCallReturningError(t *testing.T) {
+	instance := New()
+	instance.Transient(func() Shape {
+		return &Circle{a: 5}
+	})
+
+	var err error
+	instance.Call(func(shape Shape) error {
+		return errors.New("test error")
+	}, &err)
+	assert.Equal(t, "test error", err.Error())
+}
+
+func TestCallReturningNilError(t *testing.T) {
+	instance := New()
+	instance.Transient(func() Shape {
+		return &Circle{a: 5}
+	})
+
+	var err error
+	instance.Call(func(shape Shape) error {
+		return nil
+	}, &err)
+	assert.Nil(t, err)
+}
+
+func TestCallReturningTwoValues(t *testing.T) {
+	instance := New()
+
+	var a int
+	var b bool
+	instance.Call(func() (int, bool) {
+		return 1, true
+	}, &a, &b)
+	assert.Equal(t, 1, a)
+	assert.Equal(t, true, b)
 }
