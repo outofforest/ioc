@@ -1,5 +1,5 @@
-module github.com/wojciech-malota-wojcik/container
+module github.com/wojciech-malota-wojcik/ioc
 
-go 1.11
+go 1.15
 
 require github.com/stretchr/testify v1.4.0
