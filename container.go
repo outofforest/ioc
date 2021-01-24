@@ -7,8 +7,6 @@ import (
 	"sync"
 )
 
-var errType = reflect.TypeOf((*error)(nil)).Elem()
-
 // binding keeps a binding resolver and instance (for singleton bindings).
 type binding struct {
 	resolver  interface{} // resolver function
@@ -84,7 +82,7 @@ func (c *Container) arguments(name string, function interface{}) []reflect.Value
 func (c *Container) resolve(name string, abstraction reflect.Type) interface{} {
 	instance, found := c.resolveLocally(name, abstraction)
 	if found {
-		if instance != nil || abstraction.Implements(errType) {
+		if instance != nil {
 			return instance
 		}
 	} else if c.parent != nil {

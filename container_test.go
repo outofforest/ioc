@@ -1,6 +1,7 @@
 package ioc
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -387,13 +388,20 @@ func TestSubContainerResolvesFromParent(t *testing.T) {
 	assert.Equal(t, 5, shape.GetArea())
 }
 
-func TestMakeSucceedsIfNilErrorIsProduced(t *testing.T) {
+func TestMakePanicsIfDependencyResolvesToNil(t *testing.T) {
 	instance := New()
-	instance.Transient(func() error {
+	instance.Transient(func() Shape {
+		return &Circle{a: 5}
+	})
+	subInstance := instance.SubContainer()
+	subInstance.Transient(func() Shape {
 		return nil
 	})
 
-	var err error
-	instance.Make(&err)
-	assert.Nil(t, err)
+	value := "no concrete found for the abstraction: ioc.Shape"
+	assert.PanicsWithValue(t, value, func() {
+		var shape Shape
+		subInstance.Make(&shape)
+		fmt.Println(shape)
+	}, "Expected panic")
 }
