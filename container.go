@@ -147,19 +147,19 @@ func (c *Container) Reset() {
 	}
 }
 
-// Make will resolve the dependency and return an appropriate concrete of the given abstraction.
+// Resolve will resolve the dependency and return an appropriate concrete of the given abstraction.
 // It can take an abstraction (interface reference) and fill it with the related implementation.
 // It also can takes a function (receiver) with one or more arguments of the abstractions (interfaces) that need to be
 // resolved, Container will invoke the receiver function and pass the related implementations.
-func (c *Container) Make(receiver interface{}) {
-	c.MakeNamed("", receiver)
+func (c *Container) Resolve(receiver interface{}) {
+	c.ResolveNamed("", receiver)
 }
 
-// MakeNamed will resolve the named dependency and return an appropriate concrete of the given abstraction.
+// ResolveNamed will resolve the named dependency and return an appropriate concrete of the given abstraction.
 // It can take an abstraction (interface reference) and fill it with the related implementation.
 // It also can takes a function (receiver) with one or more arguments of the abstractions (interfaces) that need to be
 // resolved, Container will invoke the receiver function and pass the related implementations.
-func (c *Container) MakeNamed(name string, receiver interface{}) {
+func (c *Container) ResolveNamed(name string, receiver interface{}) {
 	receiverTypeOf := reflect.TypeOf(receiver)
 	if receiverTypeOf == nil {
 		panic("cannot detect type of the receiver, make sure your are passing reference of the object")

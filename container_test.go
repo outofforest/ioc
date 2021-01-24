@@ -67,7 +67,7 @@ func TestSingletonItShouldMakeAnInstanceOfTheAbstraction(t *testing.T) {
 		return &Circle{a: area}
 	})
 
-	instance.Make(func(s Shape) {
+	instance.Resolve(func(s Shape) {
 		a := s.GetArea()
 		assert.Equal(t, area, a)
 	})
@@ -81,11 +81,11 @@ func TestSingletonItShouldMakeSameObjectEachMake(t *testing.T) {
 
 	area := 6
 
-	instance.Make(func(s1 Shape) {
+	instance.Resolve(func(s1 Shape) {
 		s1.SetArea(area)
 	})
 
-	instance.Make(func(s2 Shape) {
+	instance.Resolve(func(s2 Shape) {
 		a := s2.GetArea()
 		assert.Equal(t, a, area)
 	})
@@ -103,8 +103,8 @@ func TestSingletonNamedInstanceIsDifferentThanDefaultOne(t *testing.T) {
 	var concreteA Concrete
 	var concreteB Concrete
 
-	instance.Make(&concreteA)
-	instance.MakeNamed("named", &concreteB)
+	instance.Resolve(&concreteA)
+	instance.ResolveNamed("named", &concreteB)
 
 	assert.Equal(t, "A", concreteA.String())
 	assert.Equal(t, "B", concreteB.String())
@@ -122,8 +122,8 @@ func TestSingletonTwoNamedInstancesAreDifferent(t *testing.T) {
 	var concreteA Concrete
 	var concreteB Concrete
 
-	instance.MakeNamed("A", &concreteA)
-	instance.MakeNamed("B", &concreteB)
+	instance.ResolveNamed("A", &concreteA)
+	instance.ResolveNamed("B", &concreteB)
 
 	assert.Equal(t, "A", concreteA.String())
 	assert.Equal(t, "B", concreteB.String())
@@ -157,11 +157,11 @@ func TestTransientItShouldMakeDifferentObjectsOnMake(t *testing.T) {
 		return &Circle{a: area}
 	})
 
-	instance.Make(func(s1 Shape) {
+	instance.Resolve(func(s1 Shape) {
 		s1.SetArea(6)
 	})
 
-	instance.Make(func(s2 Shape) {
+	instance.Resolve(func(s2 Shape) {
 		a := s2.GetArea()
 		assert.Equal(t, a, area)
 	})
@@ -179,8 +179,8 @@ func TestTransientNamedInstanceIsDifferentThanDefaultOne(t *testing.T) {
 	var concreteA Concrete
 	var concreteB Concrete
 
-	instance.Make(&concreteA)
-	instance.MakeNamed("named", &concreteB)
+	instance.Resolve(&concreteA)
+	instance.ResolveNamed("named", &concreteB)
 
 	assert.Equal(t, "A", concreteA.String())
 	assert.Equal(t, "B", concreteB.String())
@@ -198,8 +198,8 @@ func TestTransientTwoNamedInstancesAreDifferent(t *testing.T) {
 	var concreteA Concrete
 	var concreteB Concrete
 
-	instance.MakeNamed("A", &concreteA)
-	instance.MakeNamed("B", &concreteB)
+	instance.ResolveNamed("A", &concreteA)
+	instance.ResolveNamed("B", &concreteB)
 
 	assert.Equal(t, "A", concreteA.String())
 	assert.Equal(t, "B", concreteB.String())
@@ -212,26 +212,26 @@ func TestTransientItShouldMakeAnInstanceOfTheAbstraction(t *testing.T) {
 		return &Circle{a: area}
 	})
 
-	instance.Make(func(s Shape) {
+	instance.Resolve(func(s Shape) {
 		a := s.GetArea()
 		assert.Equal(t, a, area)
 	})
 }
 
-func TestMakeWithSingleInputAndCallback(t *testing.T) {
+func TestResolveWithSingleInputAndCallback(t *testing.T) {
 	instance := New()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
 	})
 
-	instance.Make(func(s Shape) {
+	instance.Resolve(func(s Shape) {
 		if _, ok := s.(*Circle); !ok {
 			t.Error("Expected Circle")
 		}
 	})
 }
 
-func TestMakeWithMultipleInputsAndCallback(t *testing.T) {
+func TestResolveWithMultipleInputsAndCallback(t *testing.T) {
 	instance := New()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
@@ -241,7 +241,7 @@ func TestMakeWithMultipleInputsAndCallback(t *testing.T) {
 		return &MySQL{}
 	})
 
-	instance.Make(func(s Shape, m Database) {
+	instance.Resolve(func(s Shape, m Database) {
 		if _, ok := s.(*Circle); !ok {
 			t.Error("Expected Circle")
 		}
@@ -252,7 +252,7 @@ func TestMakeWithMultipleInputsAndCallback(t *testing.T) {
 	})
 }
 
-func TestMakeWithSingleInputAndReference(t *testing.T) {
+func TestResolveWithSingleInputAndReference(t *testing.T) {
 	instance := New()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
@@ -260,14 +260,14 @@ func TestMakeWithSingleInputAndReference(t *testing.T) {
 
 	var s Shape
 
-	instance.Make(&s)
+	instance.Resolve(&s)
 
 	if _, ok := s.(*Circle); !ok {
 		t.Error("Expected Circle")
 	}
 }
 
-func TestMakeWithMultipleInputsAndReference(t *testing.T) {
+func TestResolveWithMultipleInputsAndReference(t *testing.T) {
 	instance := New()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
@@ -282,8 +282,8 @@ func TestMakeWithMultipleInputsAndReference(t *testing.T) {
 		d Database
 	)
 
-	instance.Make(&s)
-	instance.Make(&d)
+	instance.Resolve(&s)
+	instance.Resolve(&d)
 
 	if _, ok := s.(*Circle); !ok {
 		t.Error("Expected Circle")
@@ -294,34 +294,34 @@ func TestMakeWithMultipleInputsAndReference(t *testing.T) {
 	}
 }
 
-func TestMakeWithUnsupportedReceiver(t *testing.T) {
+func TestResolveWithUnsupportedReceiver(t *testing.T) {
 	instance := New()
 	value := "the receiver must be either a reference or a callback"
 	assert.PanicsWithValue(t, value, func() {
-		instance.Make("STRING!")
+		instance.Resolve("STRING!")
 	}, "Expected panic")
 }
 
-func TestMakeWithNonReference(t *testing.T) {
+func TestResolveWithNonReference(t *testing.T) {
 	instance := New()
 	value := "cannot detect type of the receiver, make sure your are passing reference of the object"
 	assert.PanicsWithValue(t, value, func() {
 		var s Shape
-		instance.Make(s)
+		instance.Resolve(s)
 	}, "Expected panic")
 }
 
-func TestMakeWithUnboundedAbstraction(t *testing.T) {
+func TestResolveWithUnboundedAbstraction(t *testing.T) {
 	instance := New()
 	value := "no concrete found for the abstraction: ioc.Shape"
 	assert.PanicsWithValue(t, value, func() {
 		var s Shape
 		instance.Reset()
-		instance.Make(&s)
+		instance.Resolve(&s)
 	}, "Expected panic")
 }
 
-func TestMakeWithCallbackThatHasAUnboundedAbstraction(t *testing.T) {
+func TestResolveWithCallbackThatHasAUnboundedAbstraction(t *testing.T) {
 	instance := New()
 	value := "no concrete found for the abstraction: ioc.Database"
 	assert.PanicsWithValue(t, value, func() {
@@ -329,7 +329,7 @@ func TestMakeWithCallbackThatHasAUnboundedAbstraction(t *testing.T) {
 		instance.Singleton(func() Shape {
 			return &Circle{}
 		})
-		instance.Make(func(s Shape, d Database) {})
+		instance.Resolve(func(s Shape, d Database) {})
 	}, "Expected panic")
 }
 
@@ -369,10 +369,10 @@ func TestEachContainerResolvesFromItself(t *testing.T) {
 	})
 
 	var shape Shape
-	instance.Make(&shape)
+	instance.Resolve(&shape)
 	assert.Equal(t, 5, shape.GetArea())
 
-	subInstance.Make(&shape)
+	subInstance.Resolve(&shape)
 	assert.Equal(t, 6, shape.GetArea())
 }
 
@@ -384,11 +384,11 @@ func TestSubContainerResolvesFromParent(t *testing.T) {
 	subInstance := instance.SubContainer()
 
 	var shape Shape
-	subInstance.Make(&shape)
+	subInstance.Resolve(&shape)
 	assert.Equal(t, 5, shape.GetArea())
 }
 
-func TestMakePanicsIfDependencyResolvesToNil(t *testing.T) {
+func TestResolvePanicsIfDependencyResolvesToNil(t *testing.T) {
 	instance := New()
 	instance.Transient(func() Shape {
 		return &Circle{a: 5}
@@ -401,7 +401,7 @@ func TestMakePanicsIfDependencyResolvesToNil(t *testing.T) {
 	value := "no concrete found for the abstraction: ioc.Shape"
 	assert.PanicsWithValue(t, value, func() {
 		var shape Shape
-		subInstance.Make(&shape)
+		subInstance.Resolve(&shape)
 		fmt.Println(shape)
 	}, "Expected panic")
 }
