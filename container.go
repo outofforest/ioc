@@ -69,11 +69,11 @@ func (c *Container) invoke(function interface{}) interface{} {
 func (c *Container) arguments(name string, function interface{}) []reflect.Value {
 	functionTypeOf := reflect.TypeOf(function)
 	argumentsCount := functionTypeOf.NumIn()
-	arguments := make([]reflect.Value, argumentsCount)
+	arguments := make([]reflect.Value, 0, argumentsCount)
 
 	for i := 0; i < argumentsCount; i++ {
 		abstraction := functionTypeOf.In(i)
-		arguments[i] = reflect.ValueOf(c.resolve(name, abstraction))
+		arguments = append(arguments, reflect.ValueOf(c.resolve(name, abstraction)))
 	}
 
 	return arguments
