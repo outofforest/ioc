@@ -21,12 +21,12 @@ type Container struct {
 	parent *Container
 
 	mu       sync.RWMutex
-	bindings map[reflect.Type]map[string]*binding
+	bindings map[string]map[string]*binding
 }
 
 // New returns a new instance of Container
 func New() *Container {
-	c := &Container{bindings: map[reflect.Type]map[string]*binding{}}
+	c := &Container{bindings: map[string]map[string]*binding{}}
 	c.Singleton(func() *Container {
 		return c
 	})
@@ -44,9 +44,9 @@ func (c *Container) bind(name string, resolver interface{}, singleton bool) {
 	defer c.mu.Unlock()
 
 	for i := 0; i < resolverTypeOf.NumOut(); i++ {
-		abstraction := resolverTypeOf.Out(i)
+		abstraction := resolverTypeOf.Out(i).String()
 		if _, exists := c.bindings[abstraction][name]; exists {
-			panic("concrete already exists  for the abstraction: " + abstraction.String())
+			panic("concrete already exists  for the abstraction: " + abstraction)
 		}
 		if _, exists := c.bindings[abstraction]; !exists {
 			c.bindings[abstraction] = map[string]*binding{}
@@ -92,7 +92,7 @@ func (c *Container) resolve(name string, abstraction reflect.Type) interface{} {
 func (c *Container) resolveLocally(name string, abstraction reflect.Type) interface{} {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	if binding, ok := c.bindings[abstraction][name]; ok {
+	if binding, ok := c.bindings[abstraction.String()][name]; ok {
 		if binding.singleton {
 			binding.mu.Lock()
 			defer binding.mu.Unlock()
@@ -196,7 +196,7 @@ func (c *Container) ForEachNamed(function interface{}) {
 
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	for name := range c.bindings[abstraction] {
+	for name := range c.bindings[abstraction.String()] {
 		if name == "" {
 			continue
 		}
