@@ -1,9 +1,9 @@
-package container_test
+package ioc
 
 import (
-	"github.com/golobby/container"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type Shape interface {
@@ -61,7 +61,7 @@ func (c ConcreteC) String() string {
 func TestSingletonItShouldMakeAnInstanceOfTheAbstraction(t *testing.T) {
 	area := 5
 
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: area}
 	})
@@ -73,7 +73,7 @@ func TestSingletonItShouldMakeAnInstanceOfTheAbstraction(t *testing.T) {
 }
 
 func TestSingletonItShouldMakeSameObjectEachMake(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
 	})
@@ -91,7 +91,7 @@ func TestSingletonItShouldMakeSameObjectEachMake(t *testing.T) {
 }
 
 func TestSingletonNamedInstanceIsDifferentThanDefaultOne(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Concrete {
 		return &ConcreteA{}
 	})
@@ -110,7 +110,7 @@ func TestSingletonNamedInstanceIsDifferentThanDefaultOne(t *testing.T) {
 }
 
 func TestSingletonTwoNamedInstancesAreDifferent(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.SingletonNamed("A", func() Concrete {
 		return &ConcreteA{}
 	})
@@ -129,7 +129,7 @@ func TestSingletonTwoNamedInstancesAreDifferent(t *testing.T) {
 }
 
 func TestSingletonWithNonFunctionResolverItShouldPanic(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	value := "the resolver must be a function"
 	assert.PanicsWithValue(t, value, func() {
 		instance.Singleton("STRING!")
@@ -138,7 +138,7 @@ func TestSingletonWithNonFunctionResolverItShouldPanic(t *testing.T) {
 
 func TestSingletonItShouldResolveResolverArguments(t *testing.T) {
 	area := 5
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: area}
 	})
@@ -151,7 +151,7 @@ func TestSingletonItShouldResolveResolverArguments(t *testing.T) {
 
 func TestTransientItShouldMakeDifferentObjectsOnMake(t *testing.T) {
 	area := 5
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Transient(func() Shape {
 		return &Circle{a: area}
 	})
@@ -167,7 +167,7 @@ func TestTransientItShouldMakeDifferentObjectsOnMake(t *testing.T) {
 }
 
 func TestTransientNamedInstanceIsDifferentThanDefaultOne(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Transient(func() Concrete {
 		return &ConcreteA{}
 	})
@@ -186,7 +186,7 @@ func TestTransientNamedInstanceIsDifferentThanDefaultOne(t *testing.T) {
 }
 
 func TestTransientTwoNamedInstancesAreDifferent(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.TransientNamed("A", func() Concrete {
 		return &ConcreteA{}
 	})
@@ -206,7 +206,7 @@ func TestTransientTwoNamedInstancesAreDifferent(t *testing.T) {
 
 func TestTransientItShouldMakeAnInstanceOfTheAbstraction(t *testing.T) {
 	area := 5
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Transient(func() Shape {
 		return &Circle{a: area}
 	})
@@ -218,7 +218,7 @@ func TestTransientItShouldMakeAnInstanceOfTheAbstraction(t *testing.T) {
 }
 
 func TestMakeWithSingleInputAndCallback(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
 	})
@@ -231,7 +231,7 @@ func TestMakeWithSingleInputAndCallback(t *testing.T) {
 }
 
 func TestMakeWithMultipleInputsAndCallback(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
 	})
@@ -252,7 +252,7 @@ func TestMakeWithMultipleInputsAndCallback(t *testing.T) {
 }
 
 func TestMakeWithSingleInputAndReference(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
 	})
@@ -267,7 +267,7 @@ func TestMakeWithSingleInputAndReference(t *testing.T) {
 }
 
 func TestMakeWithMultipleInputsAndReference(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
 	})
@@ -294,7 +294,7 @@ func TestMakeWithMultipleInputsAndReference(t *testing.T) {
 }
 
 func TestMakeWithUnsupportedReceiver(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	value := "the receiver must be either a reference or a callback"
 	assert.PanicsWithValue(t, value, func() {
 		instance.Make("STRING!")
@@ -302,7 +302,7 @@ func TestMakeWithUnsupportedReceiver(t *testing.T) {
 }
 
 func TestMakeWithNonReference(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	value := "cannot detect type of the receiver, make sure your are passing reference of the object"
 	assert.PanicsWithValue(t, value, func() {
 		var s Shape
@@ -311,7 +311,7 @@ func TestMakeWithNonReference(t *testing.T) {
 }
 
 func TestMakeWithUnboundedAbstraction(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	value := "no concrete found for the abstraction: container_test.Shape"
 	assert.PanicsWithValue(t, value, func() {
 		var s Shape
@@ -321,7 +321,7 @@ func TestMakeWithUnboundedAbstraction(t *testing.T) {
 }
 
 func TestMakeWithCallbackThatHasAUnboundedAbstraction(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	value := "no concrete found for the abstraction: container_test.Database"
 	assert.PanicsWithValue(t, value, func() {
 		instance.Reset()
@@ -333,7 +333,7 @@ func TestMakeWithCallbackThatHasAUnboundedAbstraction(t *testing.T) {
 }
 
 func TestForEachNamedReturnsNamedConcretesOnly(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Concrete {
 		return &ConcreteA{}
 	})
@@ -358,7 +358,7 @@ func TestForEachNamedReturnsNamedConcretesOnly(t *testing.T) {
 }
 
 func TestEachContainerResolvesFromItself(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
 	})
@@ -376,7 +376,7 @@ func TestEachContainerResolvesFromItself(t *testing.T) {
 }
 
 func TestSubContainerResolvesFromParent(t *testing.T) {
-	instance := container.NewContainer()
+	instance := NewContainer()
 	instance.Singleton(func() Shape {
 		return &Circle{a: 5}
 	})

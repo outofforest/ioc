@@ -1,6 +1,6 @@
-// Package container provides an IoC container for Go projects.
+// Package ioc provides an IoC container for Go projects.
 // It provides simple, fluent and easy-to-use interface to make dependency injection in GoLang easier.
-package container
+package ioc
 
 import (
 	"reflect"
