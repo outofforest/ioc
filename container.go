@@ -16,7 +16,7 @@ type binding struct {
 	instance interface{} // instance stored for singleton bindings
 }
 
-// Container is a map of reflect.Type to binding
+// Container is a IoC container
 type Container struct {
 	parent *Container
 
@@ -24,8 +24,8 @@ type Container struct {
 	bindings map[reflect.Type]map[string]*binding
 }
 
-// NewContainer returns a new instance of Container
-func NewContainer() *Container {
+// New returns a new instance of Container
+func New() *Container {
 	c := &Container{bindings: map[reflect.Type]map[string]*binding{}}
 	c.Singleton(func() *Container {
 		return c
@@ -208,7 +208,7 @@ func (c *Container) ForEachNamed(function interface{}) {
 // SubContainer creates sub container
 // Bindings are resolved in sub container first and if it's not possible request is redirected to the parent one
 func (c *Container) SubContainer() *Container {
-	sub := NewContainer()
+	sub := New()
 	sub.parent = c
 	return sub
 }
