@@ -1,22 +1,16 @@
-[![GoDoc](https://godoc.org/github.com/golobby/container?status.svg)](https://godoc.org/github.com/golobby/container)
-[![Build Status](https://travis-ci.org/golobby/container.svg?branch=master)](https://travis-ci.org/golobby/container)
-[![Go Report Card](https://goreportcard.com/badge/github.com/golobby/container)](https://goreportcard.com/report/github.com/golobby/container)
-[![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome) 
-[![Coverage Status](https://coveralls.io/repos/github/golobby/container/badge.svg?branch=master)](https://coveralls.io/github/golobby/container?branch=master)
-
 # Container
 A lightweight yet powerful IoC container for Go projects. It provides a simple, fluent and easy-to-use interface to make dependency injection in GoLang easier.
 
 ## Documentation
 
 ### Required Go Versions
-It requires Go `v1.11` or newer versions.
+It requires Go `v1.15` or newer versions.
 
 ### Installation
 To install this package, run the following command in the root of your project.
 
 ```bash
-go get github.com/golobby/container
+go get github.com/wojciech-malota-wojcik/ioc
 ```
 
 ### Introduction
@@ -33,7 +27,7 @@ After the binding process, you can ask the IoC container to get the appropriate 
 Singleton binding using Container:
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 c.Singleton(func() Abstraction {
   return Implementation
 })
@@ -44,7 +38,7 @@ It takes a resolver function which its return type is the abstraction and the fu
 Example for a singleton binding:
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 c.Singleton(func() Database {
   return &MySQL{}
 })
@@ -57,7 +51,7 @@ Transient binding is also similar to singleton binding.
 Example for a transient binding:
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 c.Transient(func() Shape {
   return &Rectangle{}
 })
@@ -72,18 +66,18 @@ Container resolves the dependencies with the method `make()`.
 One way to get the appropriate implementation you need is to declare an instance of the abstraction type and pass its reference to Container this way:
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 var a Abstraction
-c.Make(&a)
+c.Resolve(&a)
 // "a" will be implementation of the Abstraction
 ```
 
 Example:
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 var m Mailer
-c.Make(&m)
+c.Resolve(&m)
 m.Send("info@miladrahimi.com", "Hello Milad!")
 ```
 
@@ -93,8 +87,8 @@ Another way to resolve the dependencies is by using a function (receiver) that i
 need. Container will invoke the function and pass the related implementations for each abstraction.
 
 ```go
-c := container.NewContainer()
-c.Make(func(a Abstraction) {
+c := ioc.New()
+c.Resolve(func(a Abstraction) {
   // "a" will be implementation of the Abstraction
 })
 ```
@@ -102,7 +96,8 @@ c.Make(func(a Abstraction) {
 Example:
 
 ```go
-container.Make(func(db Database) {
+c := ioc.New()
+c.Resolve(func(db Database) {
   // "db" will be the instance of MySQL
   db.Query("...")
 })
@@ -111,11 +106,24 @@ container.Make(func(db Database) {
 You can also resolve multiple abstractions this way:
 
 ```go
-c := container.NewContainer()
-c.Make(func(db Database, s Shape) {
+c := ioc.New()
+c.Resolve(func(db Database, s Shape) {
   db.Query("...")
   s.Area()
 })
+```
+
+#### Calling functions and getting results
+
+You may call a function and get returned values:
+
+```go
+c := ioc.New()
+var result int
+var err error
+c.Call(func(db Database) (int, error) {
+  return db.GetIntValue("...")
+}, &result, &int)
 ```
 
 ### Named bindings
@@ -123,7 +131,7 @@ c.Make(func(db Database, s Shape) {
 You can also use named bindings to create many bindings of the same type:
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 c.SingletonNamed("concreteFactoryA", func() Factory {
 	return &ConcreteFactoryA{}
 })
@@ -135,9 +143,9 @@ c.SingletonNamed("concreteFactoryB", func() Factory {
 Then you may easily retrieve concrete factory based on a string saved ex. in DB:
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 var factory Factory
-c.MakeNamed(factoryName, &factory)
+c.ResolveNamed(factoryName, &factory)
 ```
 
 You can also easily iterate over all named bindings of particular interface:
@@ -153,7 +161,7 @@ c.ForEachNamed(func(factory Factory)) {
 You can also resolve a dependency at the binding time in your resolver function like the following example.
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 
 // Bind Config to JsonConfig
 c.Singleton(func() Config {
@@ -177,7 +185,7 @@ Notice: You can only resolve the dependencies in a binding resolver function tha
 You may create sub container:
 
 ```go
-c := container.NewContainer()
+c := ioc.New()
 c.Singleton(func() Binding1 { ... })
 subC := c.SubContainer()
 subC.Singleton(func() Binding2 { ... })
@@ -188,16 +196,16 @@ In above case these work:
 ```go
 var binding1 Binding1
 var binding2 Binding2
-c.Make(&binding1)
-subC.Make(&binding1)
-subC.Make(&binding2)
+c.Resolve(&binding1)
+subC.Resolve(&binding1)
+subC.Resolve(&binding2)
 ```
 
 This doesn't work:
 
 ```go
 var binding2 Binding2
-c.Make(&binding2)
+c.Resolve(&binding2)
 ```
 
 because Binding2 is registered only in sub container.
