@@ -4,6 +4,7 @@ package ioc
 
 import (
 	"reflect"
+	"sort"
 	"sync"
 )
 
@@ -209,6 +210,7 @@ func (c *Container) Names(example interface{}) []string {
 			names = append(names, name)
 		}
 	}
+	sort.Strings(names)
 	return names
 }
 
