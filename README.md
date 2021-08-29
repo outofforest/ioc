@@ -159,8 +159,10 @@ c.ForEachNamed(func(factory Factory)) {
 It's possible to get list off all the names used for named bindings for a type:
 
 ```go
-names := c.Names(Factory(nil))
+names := c.Names((*Factory)(nil))
 ```
+
+Keep in mind, you have to pass pointer to interface!
 
 ### Binding time
 
