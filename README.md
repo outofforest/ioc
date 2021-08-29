@@ -156,7 +156,13 @@ c.ForEachNamed(func(factory Factory)) {
 }
 ```
 
-#### Binding time
+It's possible to get list off all the names used for named bindings for a type:
+
+```go
+names := c.Names(Factory(nil))
+```
+
+### Binding time
 
 You can also resolve a dependency at the binding time in your resolver function like the following example.
 
@@ -180,7 +186,7 @@ c.Singleton(func(c Config) Database {
 
 Notice: You can only resolve the dependencies in a binding resolver function that has already bound.
 
-#### Sub containers
+### Sub containers
 
 You may create sub container:
 

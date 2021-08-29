@@ -201,6 +201,17 @@ func (c *Container) ForEachNamed(function interface{}) {
 	}
 }
 
+// Names returns names of all the named bindings for the type
+func (c *Container) Names(example interface{}) []string {
+	var names []string
+	for name := range c.bindings[reflect.TypeOf(example).String()] {
+		if name != "" {
+			names = append(names, name)
+		}
+	}
+	return names
+}
+
 // Call will call the given function and return its returned values.
 func (c *Container) Call(function interface{}, returnedValues ...interface{}) {
 	res := reflect.ValueOf(function).Call(c.arguments("", function))
