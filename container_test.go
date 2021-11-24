@@ -359,6 +359,83 @@ func TestForEachNamedReturnsNamedConcretesOnly(t *testing.T) {
 	assert.True(t, vals["C"])
 }
 
+func TestForEachNamedResolvesFromParentInstance(t *testing.T) {
+	instance := New()
+	instance.Singleton(func() Concrete {
+		return &ConcreteA{}
+	})
+	instance.SingletonNamed("B", func() Concrete {
+		return &ConcreteB{}
+	})
+	subInstance := instance.SubContainer()
+	subInstance.TransientNamed("C", func() Concrete {
+		return &ConcreteC{}
+	})
+	subInstance.SingletonNamed("B", func() Shape {
+		return &Circle{}
+	})
+
+	vals := map[string]bool{}
+	subInstance.ForEachNamed(func(c Concrete) {
+		assert.False(t, vals[c.String()])
+		vals[c.String()] = true
+	})
+	assert.Len(t, vals, 2)
+	assert.True(t, vals["B"])
+	assert.True(t, vals["C"])
+}
+
+func TestNamesReturnsCorrectNames(t *testing.T) {
+	instance := New()
+	instance.Singleton(func() Concrete {
+		return &ConcreteA{}
+	})
+	instance.SingletonNamed("B", func() Concrete {
+		return &ConcreteB{}
+	})
+	instance.TransientNamed("C", func() Concrete {
+		return &ConcreteC{}
+	})
+	instance.SingletonNamed("B", func() Shape {
+		return &Circle{}
+	})
+
+	vals := map[string]bool{}
+	for _, name := range instance.Names((*Concrete)(nil)) {
+		assert.False(t, vals[name])
+		vals[name] = true
+	}
+	assert.Len(t, vals, 2)
+	assert.True(t, vals["B"])
+	assert.True(t, vals["C"])
+}
+
+func TestNamesIncludesNamesFromParentInstance(t *testing.T) {
+	instance := New()
+	instance.Singleton(func() Concrete {
+		return &ConcreteA{}
+	})
+	instance.SingletonNamed("B", func() Concrete {
+		return &ConcreteB{}
+	})
+	subInstance := instance.SubContainer()
+	subInstance.TransientNamed("C", func() Concrete {
+		return &ConcreteC{}
+	})
+	subInstance.SingletonNamed("B", func() Shape {
+		return &Circle{}
+	})
+
+	vals := map[string]bool{}
+	for _, name := range subInstance.Names((*Concrete)(nil)) {
+		assert.False(t, vals[name])
+		vals[name] = true
+	}
+	assert.Len(t, vals, 2)
+	assert.True(t, vals["B"])
+	assert.True(t, vals["C"])
+}
+
 func TestEachContainerResolvesFromItself(t *testing.T) {
 	instance := New()
 	instance.Singleton(func() Shape {

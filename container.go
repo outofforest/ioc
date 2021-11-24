@@ -193,10 +193,7 @@ func (c *Container) ForEachNamed(function interface{}) {
 
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	for name := range c.bindings[abstraction.String()] {
-		if name == "" {
-			continue
-		}
+	for name := range c.names(abstraction) {
 		arguments := c.arguments(name, function)
 		reflect.ValueOf(function).Call(arguments)
 	}
@@ -204,11 +201,10 @@ func (c *Container) ForEachNamed(function interface{}) {
 
 // Names returns names of all the named bindings for the type
 func (c *Container) Names(example interface{}) []string {
-	var names []string
-	for name := range c.bindings[reflect.TypeOf(example).Elem().String()] {
-		if name != "" {
-			names = append(names, name)
-		}
+	namesMap := c.names(reflect.TypeOf(example).Elem())
+	names := make([]string, 0, len(namesMap))
+	for name := range namesMap {
+		names = append(names, name)
 	}
 	sort.Strings(names)
 	return names
@@ -228,4 +224,20 @@ func (c *Container) SubContainer() *Container {
 	sub := New()
 	sub.parent = c
 	return sub
+}
+
+func (c *Container) names(abstraction reflect.Type) map[string]bool {
+	var names map[string]bool
+	if c.parent != nil {
+		names = c.parent.names(abstraction)
+	} else {
+		names = map[string]bool{}
+	}
+
+	for name := range c.bindings[abstraction.String()] {
+		if name != "" {
+			names[name] = true
+		}
+	}
+	return names
 }
