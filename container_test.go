@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	pkgA "github.com/wojciech-malota-wojcik/ioc/test/a/pkg"
+	pkgB "github.com/wojciech-malota-wojcik/ioc/test/b/pkg"
 )
 
 type Shape interface {
@@ -541,4 +543,18 @@ func TestCallReturningTwoValues(t *testing.T) {
 	}, &a, &b)
 	assert.Equal(t, 1, a)
 	assert.Equal(t, true, b)
+}
+
+func TestTwoTypesWithSameName(t *testing.T) {
+	instance := New()
+	instance.Singleton(func() pkgA.Concrete {
+		return pkgA.Concrete{}
+	})
+	instance.Singleton(func() pkgB.Concrete {
+		return pkgB.Concrete{}
+	})
+
+	instance.Resolve(func(cA pkgA.Concrete, cB pkgB.Concrete) {
+
+	})
 }
