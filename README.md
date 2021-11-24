@@ -164,6 +164,14 @@ names := c.Names((*Factory)(nil))
 
 Keep in mind, you have to pass pointer to interface!
 
+You may also check if named binding exists:
+
+```go
+if c.NameExists(factoryName, (*Factory)(nil)) {
+
+}
+```
+
 ### Binding time
 
 You can also resolve a dependency at the binding time in your resolver function like the following example.

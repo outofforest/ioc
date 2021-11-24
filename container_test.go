@@ -436,6 +436,27 @@ func TestNamesIncludesNamesFromParentInstance(t *testing.T) {
 	assert.True(t, vals["C"])
 }
 
+func TestNameExists(t *testing.T) {
+	instance := New()
+	instance.Singleton(func() Concrete {
+		return &ConcreteA{}
+	})
+	instance.SingletonNamed("B", func() Concrete {
+		return &ConcreteB{}
+	})
+	subInstance := instance.SubContainer()
+	subInstance.TransientNamed("C", func() Concrete {
+		return &ConcreteC{}
+	})
+	subInstance.SingletonNamed("B", func() Shape {
+		return &Circle{}
+	})
+
+	assert.False(t, subInstance.NameExists("A", (*Concrete)(nil)))
+	assert.True(t, subInstance.NameExists("B", (*Concrete)(nil)))
+	assert.True(t, subInstance.NameExists("C", (*Concrete)(nil)))
+}
+
 func TestEachContainerResolvesFromItself(t *testing.T) {
 	instance := New()
 	instance.Singleton(func() Shape {

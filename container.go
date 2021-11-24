@@ -210,6 +210,11 @@ func (c *Container) Names(example interface{}) []string {
 	return names
 }
 
+// NameExists returns true if named concrete exist
+func (c *Container) NameExists(name string, example interface{}) bool {
+	return c.names(reflect.TypeOf(example).Elem())[name]
+}
+
 // Call will call the given function and return its returned values.
 func (c *Container) Call(function interface{}, returnedValues ...interface{}) {
 	res := reflect.ValueOf(function).Call(c.arguments("", function))
