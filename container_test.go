@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	pkgA "github.com/wojciech-malota-wojcik/ioc/test/a/pkg"
-	pkgB "github.com/wojciech-malota-wojcik/ioc/test/b/pkg"
+	pkgA "github.com/wojciech-malota-wojcik/ioc/v2/test/a/pkg"
+	pkgB "github.com/wojciech-malota-wojcik/ioc/v2/test/b/pkg"
 )
 
 type Shape interface {

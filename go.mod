@@ -1,4 +1,4 @@
-module github.com/wojciech-malota-wojcik/ioc
+module github.com/wojciech-malota-wojcik/ioc/v2
 
 go 1.15
 
