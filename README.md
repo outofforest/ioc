@@ -4,13 +4,13 @@ A lightweight yet powerful IoC container for Go projects. It provides a simple, 
 ## Documentation
 
 ### Required Go Versions
-It requires Go `v1.15` or newer versions.
+It requires Go `v1.16` or newer versions.
 
 ### Installation
 To install this package, run the following command in the root of your project.
 
 ```bash
-go get github.com/wojciech-malota-wojcik/ioc
+go get github.com/outofforest/ioc/v2
 ```
 
 ### Introduction
