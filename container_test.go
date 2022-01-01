@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	pkgA "github.com/outofforest/ioc/v2/test/a/pkg"
+	pkgB "github.com/outofforest/ioc/v2/test/b/pkg"
 	"github.com/stretchr/testify/assert"
-	pkgA "github.com/wojciech-malota-wojcik/ioc/v2/test/a/pkg"
-	pkgB "github.com/wojciech-malota-wojcik/ioc/v2/test/b/pkg"
 )
 
 type Shape interface {
