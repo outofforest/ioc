@@ -1,13 +1,14 @@
 package ioc
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
+
 	pkgA "github.com/outofforest/ioc/v2/test/a/pkg"
 	pkgB "github.com/outofforest/ioc/v2/test/b/pkg"
-	"github.com/stretchr/testify/assert"
 )
 
 type Shape interface {
